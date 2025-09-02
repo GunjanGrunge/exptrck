@@ -37,8 +37,12 @@ export default function IncomeForm({ onClose, onSubmit, income }: IncomeFormProp
       source: income.source,
       amount: income.amount,
       isRecurring: income.isRecurring,
-      frequency: income.frequency || 'monthly',
-      category: income.category || 'other',
+      frequency: (income.frequency && ['monthly', 'weekly', 'yearly', 'daily', 'one-time'].includes(income.frequency)) 
+        ? income.frequency as 'monthly' | 'weekly' | 'yearly' | 'daily' | 'one-time'
+        : 'monthly',
+      category: (income.category && ['salary', 'freelance', 'investment', 'business', 'rental', 'other'].includes(income.category))
+        ? income.category as 'salary' | 'freelance' | 'investment' | 'business' | 'rental' | 'other'
+        : 'other',
       description: income.description || '',
       nextPaymentDate: income.nextPaymentDate ? new Date(income.nextPaymentDate).toISOString().split('T')[0] : '',
     } : {
@@ -55,10 +59,10 @@ export default function IncomeForm({ onClose, onSubmit, income }: IncomeFormProp
       source: data.source,
       amount: data.amount,
       isRecurring: data.isRecurring,
-      frequency: data.frequency,
-      category: data.category,
-      description: data.description,
-      nextPaymentDate: data.nextPaymentDate ? new Date(data.nextPaymentDate) : undefined,
+      frequency: data.frequency || null,
+      category: data.category || null,
+      description: data.description || null,
+      nextPaymentDate: data.nextPaymentDate ? new Date(data.nextPaymentDate) : null,
     }
     
     onSubmit(incomeData)

@@ -59,8 +59,11 @@ export default function ExpenseForm({ onClose, onSubmit, expense }: ExpenseFormP
       dueDate: data.dueDate,
       category: data.category,
       isRecurring: data.isRecurring,
-      source: data.source,
-      destination: data.destination,
+      isPaid: expense?.isPaid || false,
+      paidAt: expense?.paidAt || null,
+      source: data.source || null,
+      destination: data.destination || null,
+      creditCardId: expense?.creditCardId || null,
       createdAt: expense?.createdAt || new Date(),
       updatedAt: new Date(),
     }

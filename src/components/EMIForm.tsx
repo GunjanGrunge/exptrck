@@ -65,7 +65,8 @@ export default function EMIForm({ onClose, onSubmit, emi }: EMIFormProps) {
       totalInstallments: data.totalInstallments,
       paidInstallments: data.paidInstallments,
       remainingInstallments: remaining,
-      creditCardId: data.creditCardId || undefined,
+      lastPaymentDate: emi?.lastPaymentDate || null,
+      creditCardId: data.creditCardId || null,
       createdAt: emi?.createdAt || new Date(),
       updatedAt: new Date(),
     }

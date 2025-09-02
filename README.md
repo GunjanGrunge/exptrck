@@ -31,8 +31,8 @@ The application uses a custom color palette:
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
-   cd expense-tracker
+   git clone https://github.com/GunjanGrunge/exptrck.git
+   cd exptrck
    ```
 
 2. **Install dependencies**
@@ -115,18 +115,26 @@ src/
 
 ## 💾 Data Storage
 
-Currently uses localStorage for data persistence. For production, consider integrating with:
-- Supabase
-- MongoDB
-- PostgreSQL
-- Firebase
+This application uses PostgreSQL with Prisma ORM for reliable data persistence. All user data is securely isolated by Clerk authentication.
 
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/GunjanGrunge/exptrck)
+
 1. **Connect your repository to Vercel**
-2. **Add environment variables** in Vercel dashboard
+   - Fork this repository
+   - Connect GitHub to Vercel
+   - Import the `exptrck` project
+
+2. **Add environment variables** in Vercel dashboard:
+   ```env
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_key
+   CLERK_SECRET_KEY=your_clerk_secret
+   DATABASE_URL=your_postgresql_connection_string
+   ```
+
 3. **Deploy** - Vercel will automatically build and deploy
 
 ### Manual Deployment

@@ -24,7 +24,7 @@ export interface EMI {
   totalInstallments: number;
   paidInstallments: number;
   remainingInstallments: number;
-  lastPaymentDate?: Date;
+  lastPaymentDate: Date | null;
   creditCardId?: string;
   createdAt: Date;
   updatedAt: Date;

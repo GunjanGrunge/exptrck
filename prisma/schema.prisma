@@ -28,21 +28,23 @@ model User {
 }
 
 model Expense {
-  id          String   @id @default(cuid())
-  title       String
-  amount      Float
-  dueDate     Int      // Day of month (1-31)
-  category    String   // 'expense' | 'emi' | 'transfer'
-  isRecurring Boolean  @default(false)
-  isPaid      Boolean  @default(false)
-  paidAt      DateTime?
-  source      String?
-  destination String?
-  userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  title        String
+  amount       Float
+  dueDate      Int      // Day of month (1-31)
+  category     String   // 'expense' | 'emi' | 'transfer'
+  isRecurring  Boolean  @default(false)
+  isPaid       Boolean  @default(false)
+  paidAt       DateTime?
+  source       String?
+  destination  String?
+  creditCardId String?  // Optional: For credit card expenses
+  userId       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditCard CreditCard? @relation(fields: [creditCardId], references: [id], onDelete: SetNull)
 
   @@map("expenses")
 }
@@ -97,8 +99,9 @@ model CreditCard {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  emis Emi[]
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emis     Emi[]
+  expenses Expense[]
 
   @@map("credit_cards")
 }

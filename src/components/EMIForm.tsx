@@ -39,7 +39,7 @@ export default function EMIForm({ onClose, onSubmit, emi }: EMIFormProps) {
       dueDate: emi.dueDate,
       startDate: new Date(emi.startDate).toISOString().split('T')[0],
       totalInstallments: emi.totalInstallments,
-      paidInstallments: emi.totalInstallments - emi.remainingInstallments,
+      paidInstallments: emi.paidInstallments || (emi.totalInstallments - emi.remainingInstallments),
       creditCardId: emi.creditCardId || '',
     } : {
       dueDate: 1,
@@ -48,9 +48,9 @@ export default function EMIForm({ onClose, onSubmit, emi }: EMIFormProps) {
     }
   })
 
-  const totalInstallments = watch('totalInstallments')
-  const paidInstallments = watch('paidInstallments')
-  const remainingInstallments = totalInstallments - paidInstallments
+  const totalInstallments = watch('totalInstallments') || 0
+  const paidInstallments = watch('paidInstallments') || 0
+  const remainingInstallments = (totalInstallments && paidInstallments) ? totalInstallments - paidInstallments : 0
 
   const onFormSubmit = (data: EMIFormData) => {
     const startDate = new Date(data.startDate)
@@ -63,6 +63,7 @@ export default function EMIForm({ onClose, onSubmit, emi }: EMIFormProps) {
       dueDate: data.dueDate,
       startDate: startDate,
       totalInstallments: data.totalInstallments,
+      paidInstallments: data.paidInstallments,
       remainingInstallments: remaining,
       creditCardId: data.creditCardId || undefined,
       createdAt: emi?.createdAt || new Date(),
@@ -174,7 +175,7 @@ export default function EMIForm({ onClose, onSubmit, emi }: EMIFormProps) {
               {...register('paidInstallments', { valueAsNumber: true })}
               type="number"
               min="0"
-              max={totalInstallments}
+              max={totalInstallments > 0 ? totalInstallments : undefined}
               className="input-field"
               placeholder="0"
             />

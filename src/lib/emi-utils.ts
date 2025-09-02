@@ -2,22 +2,45 @@ import { differenceInMonths, isAfter, isBefore, addMonths, startOfMonth } from '
 import { EMI } from '@/types';
 
 export function calculateRemainingEMIs(emi: EMI): number {
-  const currentDate = new Date();
-  const currentMonthStart = startOfMonth(currentDate);
-  const emiStartMonth = startOfMonth(new Date(emi.startDate));
-  
-  // Calculate how many months have passed since EMI started
-  const monthsPassed = Math.max(0, differenceInMonths(currentMonthStart, emiStartMonth));
-  
-  // If current date is past the due date of current month, count current month as paid
-  const currentDayOfMonth = currentDate.getDate();
-  const extraMonth = currentDayOfMonth > emi.dueDate ? 1 : 0;
-  
-  const totalPaidMonths = monthsPassed + extraMonth;
-  const calculatedRemaining = emi.totalInstallments - totalPaidMonths;
-  
-  // Don't let it go below 0 or above initial remaining installments
-  return Math.max(0, Math.min(calculatedRemaining, emi.remainingInstallments));
+  try {
+    const currentDate = new Date();
+    const currentMonthStart = startOfMonth(currentDate);
+    const emiStartMonth = startOfMonth(new Date(emi.startDate));
+    
+    // Ensure we have valid numbers
+    const totalInstallments = Number(emi.totalInstallments);
+    const paidInstallments = Number(emi.paidInstallments) || 0;
+    const dueDate = Number(emi.dueDate);
+    
+    if (isNaN(totalInstallments) || isNaN(dueDate)) {
+      console.warn('Invalid EMI data:', { totalInstallments, dueDate });
+      return Math.max(0, totalInstallments - paidInstallments);
+    }
+    
+    // Calculate how many months have passed since EMI started
+    const monthsPassed = Math.max(0, differenceInMonths(currentMonthStart, emiStartMonth));
+    
+    // If current date is past the due date of current month, count current month as due
+    const currentDayOfMonth = currentDate.getDate();
+    const extraMonth = currentDayOfMonth > dueDate ? 1 : 0;
+    
+    // Total installments that should be due by now based on time
+    const installmentsDueByTime = Math.min(totalInstallments, monthsPassed + extraMonth);
+    
+    // Use the maximum of manually paid installments or time-based calculations
+    // This ensures we don't go backwards when someone manually marks payments
+    const effectivePaidInstallments = Math.max(paidInstallments, installmentsDueByTime);
+    
+    const calculatedRemaining = totalInstallments - effectivePaidInstallments;
+    
+    // Don't let it go below 0
+    const result = Math.max(0, calculatedRemaining);
+    
+    return isNaN(result) ? Math.max(0, totalInstallments - paidInstallments) : result;
+  } catch (error) {
+    console.error('Error calculating remaining EMIs:', error);
+    return Math.max(0, Number(emi.totalInstallments) - Number(emi.paidInstallments || 0));
+  }
 }
 
 export function updateEMIRemainingInstallments(emi: EMI): EMI {
@@ -63,10 +86,15 @@ export function calculateTotalEMIAmount(emis: EMI[]): number {
 }
 
 export function markEMIPaid(emi: EMI): EMI {
-  const newRemaining = Math.max(0, emi.remainingInstallments - 1);
+  const currentPaidInstallments = Number(emi.paidInstallments) || 0;
+  const newPaidInstallments = currentPaidInstallments + 1;
+  const newRemainingInstallments = Math.max(0, emi.totalInstallments - newPaidInstallments);
+  
   return {
     ...emi,
-    remainingInstallments: newRemaining,
+    paidInstallments: newPaidInstallments,
+    remainingInstallments: newRemainingInstallments,
+    lastPaymentDate: new Date(),
     updatedAt: new Date()
   };
 }

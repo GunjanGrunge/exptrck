@@ -6,6 +6,7 @@ import { Plus, CreditCard as CreditCardIcon, TrendingUp, TrendingDown, Calendar,
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { formatCurrency } from '@/lib/utils'
+import { updateEMIRemainingInstallments } from '@/lib/emi-utils'
 import { AnimatedCard, FadeIn, SlideUp, StaggerContainer, StaggerItem } from './ui/AnimatedComponents'
 import { AnimatedButton } from './ui/AnimatedButton'
 import { Skeleton, TableSkeleton, CardSkeleton } from './ui/Skeleton'
@@ -38,10 +39,14 @@ export default function Dashboard() {
 
   // Fetch data from API
   const fetchData = async () => {
-    if (!user?.id) return
+    if (!user?.id) {
+      console.log('No user ID available for data fetch')
+      return
+    }
 
     try {
       setLoading(true)
+      console.log('Fetching data for user:', user.id)
       
       // Fetch all data in parallel
       const [expensesRes, emisRes, incomeRes, creditCardsRes] = await Promise.all([
@@ -53,25 +58,45 @@ export default function Dashboard() {
 
       if (expensesRes.ok) {
         const expensesData = await expensesRes.json()
+        console.log('Expenses loaded:', expensesData.length)
         setExpenses(expensesData)
+      } else {
+        console.error('Failed to fetch expenses:', expensesRes.status)
       }
 
       if (emisRes.ok) {
         const emisData = await emisRes.json()
-        setEMIs(emisData)
+        console.log('EMIs loaded:', emisData.length)
+        
+        // Update EMI remaining installments based on current date
+        const updatedEMIs = emisData.map((emi: EMI) => updateEMIRemainingInstallments(emi))
+        console.log('EMIs updated with current calculations:', updatedEMIs.length)
+        
+        setEMIs(updatedEMIs)
+      } else {
+        console.error('Failed to fetch EMIs:', emisRes.status)
       }
 
       if (incomeRes.ok) {
         const incomeData = await incomeRes.json()
+        console.log('Income loaded:', incomeData.length)
         setIncomes(incomeData)
+      } else {
+        console.error('Failed to fetch income:', incomeRes.status)
       }
 
       if (creditCardsRes.ok) {
         const creditCardsData = await creditCardsRes.json()
+        console.log('Credit cards loaded:', creditCardsData.length, creditCardsData)
         setCreditCards(creditCardsData)
+      } else {
+        console.error('Failed to fetch credit cards:', creditCardsRes.status, creditCardsRes.statusText)
+        const errorText = await creditCardsRes.text()
+        console.error('Credit cards error response:', errorText)
       }
     } catch (error) {
       console.error('Error fetching data:', error)
+      toast.error('Failed to load data')
     } finally {
       setLoading(false)
     }
@@ -79,22 +104,89 @@ export default function Dashboard() {
 
   // Load data when user is available
   useEffect(() => {
+    console.log('User effect triggered. User ID:', user?.id)
     if (user?.id) {
       fetchData()
     }
   }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Also trigger on user.isLoaded to handle authentication state changes
+  useEffect(() => {
+    if (user?.id && !loading && expenses.length === 0) {
+      console.log('Backup data fetch triggered')
+      fetchData()
+    }
+  }, [user?.id, loading]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Calculate monthly budget
   const calculateMonthlyBudget = (): MonthlyBudget => {
     const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0)
-    const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0)
-    const totalEMIs = emis.reduce((sum, emi) => sum + emi.amount, 0)
-    const balance = totalIncome - totalExpenses - totalEMIs
+    
+    // Separate regular expenses from EMI payment expenses
+    const regularExpenses = expenses.filter(expense => expense.category !== 'emi')
+    const emiPaymentExpenses = expenses.filter(expense => expense.category === 'emi')
+    
+    const totalRegularExpenses = regularExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+    const totalEMIPayments = emiPaymentExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+    
+    // Get current month and year
+    const currentDate = new Date()
+    const currentMonth = currentDate.getMonth() + 1 // getMonth() returns 0-11
+    const currentYear = currentDate.getFullYear()
+    const currentDay = currentDate.getDate()
+    
+    // Calculate outstanding EMIs for current month only
+    // An EMI is outstanding for current month if:
+    // 1. It has remaining installments > 0
+    // 2. Its due date has passed or is today in current month
+    // 3. It hasn't been paid this month (check lastPaymentDate)
+    const currentMonthOutstandingEMIs = emis
+      .filter(emi => {
+        if (emi.remainingInstallments <= 0) return false
+        
+        // Check if EMI is due this month
+        const isDueThisMonth = emi.dueDate <= currentDay
+        if (!isDueThisMonth) return false
+        
+        // Check if already paid this month
+        if (emi.lastPaymentDate) {
+          const lastPayment = new Date(emi.lastPaymentDate)
+          const isPaidThisMonth = lastPayment.getMonth() + 1 === currentMonth && 
+                                  lastPayment.getFullYear() === currentYear
+          if (isPaidThisMonth) return false
+        }
+        
+        return true
+      })
+      .reduce((sum, emi) => sum + emi.amount, 0)
+    
+    // Total expenses includes both regular expenses and EMI payments
+    const totalExpenses = totalRegularExpenses + totalEMIPayments
+    
+    // Balance calculation: Income - All Expenses - Current Month Outstanding EMIs
+    // Note: EMI payments are already in expenses, outstanding EMIs are unpaid current month obligations
+    const balance = totalIncome - totalExpenses - currentMonthOutstandingEMIs
+
+    // Debug logging
+    console.log('Budget Calculation:', {
+      totalIncome,
+      totalRegularExpenses,
+      totalEMIPayments,
+      totalExpenses,
+      currentMonthOutstandingEMIs,
+      balance,
+      currentMonth,
+      currentYear,
+      currentDay,
+      incomeCount: incomes.length,
+      expenseCount: expenses.length,
+      emiCount: emis.length
+    })
 
     return {
       totalIncome,
       totalExpenses,
-      totalEMIs,
+      totalEMIs: currentMonthOutstandingEMIs, // Only show current month outstanding EMIs
       balance,
       month: new Date().getMonth() + 1,
       year: new Date().getFullYear(),
@@ -335,9 +427,18 @@ export default function Dashboard() {
       })
 
       if (response.ok) {
-        const updated = await response.json()
-        setEMIs(prev => prev.map(e => e.id === emi.id ? updated : e))
-        toast.success('EMI marked as paid!')
+        const result = await response.json()
+        
+        // Update EMI list
+        setEMIs(prev => prev.map(e => e.id === emi.id ? result : e))
+        
+        // Refresh expenses to show the new EMI payment expense
+        if (result.expenseCreated) {
+          await fetchData() // Refresh all data to ensure consistency
+          toast.success(`EMI marked as paid! Expense of ${formatCurrency(emi.amount)} added automatically.`)
+        } else {
+          toast.success('EMI marked as paid!')
+        }
       }
     } catch (error) {
       console.error('Error marking EMI as paid:', error)
@@ -415,14 +516,25 @@ export default function Dashboard() {
                 <p className="text-sm text-gray-500">Welcome back</p>
                 <p className="font-semibold text-gray-800">{user?.firstName || user?.emailAddresses[0]?.emailAddress}</p>
               </div>
-              <UserButton 
-                appearance={{
-                  elements: {
-                    avatarBox: 'w-10 h-10 ring-2 ring-primary-200 hover:ring-primary-300 transition-all duration-200',
-                  }
-                }}
-                showName={false}
-              />
+              <div className="flex items-center gap-2">
+                <AnimatedButton
+                  onClick={fetchData}
+                  disabled={loading}
+                  variant="secondary"
+                  size="sm"
+                  className="text-xs px-3 py-1.5"
+                >
+                  {loading ? 'Loading...' : 'Refresh'}
+                </AnimatedButton>
+                <UserButton 
+                  appearance={{
+                    elements: {
+                      avatarBox: 'w-10 h-10 ring-2 ring-primary-200 hover:ring-primary-300 transition-all duration-200',
+                    }
+                  }}
+                  showName={false}
+                />
+              </div>
             </FadeIn>
           </div>
         </div>
@@ -501,9 +613,9 @@ export default function Dashboard() {
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Financial Overview</h2>
           <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StaggerItem>
-              <AnimatedCard className="p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer">
-                <div className="flex items-center justify-between">
-                  <div>
+              <AnimatedCard className="p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer min-h-[140px]">
+                <div className="flex items-center justify-between h-full">
+                  <div className="flex-1">
                     <p className="text-sm font-medium text-gray-500 mb-2">Total Income</p>
                     <motion.p 
                       className="text-3xl font-bold text-green-600"
@@ -525,9 +637,9 @@ export default function Dashboard() {
             </StaggerItem>
             
             <StaggerItem>
-              <AnimatedCard className="p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer">
-                <div className="flex items-center justify-between">
-                  <div>
+              <AnimatedCard className="p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer min-h-[140px]">
+                <div className="flex items-center justify-between h-full">
+                  <div className="flex-1">
                     <p className="text-sm font-medium text-gray-500 mb-2">Total Expenses</p>
                     <motion.p 
                       className="text-3xl font-bold text-red-600"
@@ -536,7 +648,7 @@ export default function Dashboard() {
                     >
                       {formatCurrency(budget.totalExpenses)}
                     </motion.p>
-                    <p className="text-xs text-gray-400 mt-1">This month</p>
+                    <p className="text-xs text-gray-400 mt-1">Includes paid EMIs</p>
                   </div>
                   <motion.div 
                     className="w-14 h-14 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
@@ -549,10 +661,10 @@ export default function Dashboard() {
             </StaggerItem>
             
             <StaggerItem>
-              <AnimatedCard className="p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 mb-2">Total EMIs</p>
+              <AnimatedCard className="p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer min-h-[140px]">
+                <div className="flex items-center justify-between h-full">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-500 mb-2">Outstanding EMIs</p>
                     <motion.p 
                       className="text-3xl font-bold text-orange-600"
                       initial={{ scale: 1 }}
@@ -560,7 +672,7 @@ export default function Dashboard() {
                     >
                       {formatCurrency(budget.totalEMIs)}
                     </motion.p>
-                    <p className="text-xs text-gray-400 mt-1">Monthly payments</p>
+                    <p className="text-xs text-gray-400 mt-1">This month</p>
                   </div>
                   <motion.div 
                     className="w-14 h-14 bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
@@ -573,9 +685,9 @@ export default function Dashboard() {
             </StaggerItem>
             
             <StaggerItem>
-              <AnimatedCard className="p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer">
-                <div className="flex items-center justify-between">
-                  <div>
+              <AnimatedCard className="p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer min-h-[140px]">
+                <div className="flex items-center justify-between h-full">
+                  <div className="flex-1">
                     <p className="text-sm font-medium text-gray-500 mb-2">Balance</p>
                     <motion.p 
                       className={`text-3xl font-bold ${budget.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}
@@ -604,6 +716,13 @@ export default function Dashboard() {
               </AnimatedCard>
             </StaggerItem>
           </StaggerContainer>
+          
+          {/* Debugging breakdown */}
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
+            <h3 className="font-semibold mb-2">Calculation Breakdown:</h3>
+            <p>Income: ₹{budget.totalIncome.toLocaleString()} - Expenses: ₹{budget.totalExpenses.toLocaleString()} - Outstanding EMIs (This Month): ₹{budget.totalEMIs.toLocaleString()} = Balance: ₹{budget.balance.toLocaleString()}</p>
+            <p className="text-xs mt-1">Note: Outstanding EMIs shows only unpaid EMIs due this month. As you mark EMIs as paid, this amount decreases.</p>
+          </div>
         </SlideUp>
 
         {/* Tabs */}

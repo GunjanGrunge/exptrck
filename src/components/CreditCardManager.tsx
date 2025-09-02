@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Plus, Edit, Trash2, CreditCard as CreditCardIcon } from 'lucide-react'
+import { X, Plus, Edit, Trash2, CreditCard as CreditCardIcon, DollarSign } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { CreditCard } from '@/types'
 import { generateId, formatCurrency } from '@/lib/utils'
 
@@ -28,8 +29,11 @@ export default function CreditCardManager({
   onClose, 
   onUpdate 
 }: CreditCardManagerProps) {
+  console.log('CreditCardManager received creditCards:', creditCards)
   const [showForm, setShowForm] = useState(false)
   const [editingCard, setEditingCard] = useState<CreditCard | null>(null)
+  const [paymentCard, setPaymentCard] = useState<CreditCard | null>(null)
+  const [paymentAmount, setPaymentAmount] = useState('')
 
   const {
     register,
@@ -40,41 +44,72 @@ export default function CreditCardManager({
     resolver: zodResolver(creditCardSchema),
   })
 
-  const onFormSubmit = (data: CreditCardFormData) => {
-    const availableAmount = data.limit - data.usedAmount
-    
-    if (editingCard) {
-      const updatedCards = creditCards.map(card => 
-        card.id === editingCard.id 
-          ? {
-              ...card,
-              name: data.name,
-              limit: data.limit,
-              usedAmount: data.usedAmount,
-              availableAmount,
-              dueDate: data.dueDate,
-              updatedAt: new Date(),
-            }
-          : card
-      )
-      onUpdate(updatedCards)
-      setEditingCard(null)
-    } else {
-      const newCard: CreditCard = {
-        id: generateId(),
-        name: data.name,
-        limit: data.limit,
-        usedAmount: data.usedAmount,
-        availableAmount,
-        dueDate: data.dueDate,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+  const onFormSubmit = async (data: CreditCardFormData) => {
+    try {
+      const availableAmount = data.limit - data.usedAmount
+      
+      if (editingCard) {
+        // Update existing card via API
+        const response = await fetch(`/api/credit-cards/${editingCard.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: data.name,
+            limit: data.limit,
+            usedAmount: data.usedAmount,
+            availableAmount,
+            dueDate: data.dueDate,
+          }),
+        })
+
+        if (response.ok) {
+          const updatedCard = await response.json()
+          const updatedCards = creditCards.map(card => 
+            card.id === editingCard.id ? updatedCard : card
+          )
+          onUpdate(updatedCards)
+          setEditingCard(null)
+          toast.success('Credit card updated successfully!')
+        } else {
+          console.error('Failed to update credit card')
+          toast.error('Failed to update credit card')
+          return
+        }
+      } else {
+        // Create new card via API
+        const response = await fetch('/api/credit-cards', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: data.name,
+            limit: data.limit,
+            usedAmount: data.usedAmount,
+            availableAmount,
+            dueDate: data.dueDate,
+          }),
+        })
+
+        if (response.ok) {
+          const newCard = await response.json()
+          onUpdate([...creditCards, newCard])
+          toast.success('Credit card added successfully!')
+        } else {
+          console.error('Failed to create credit card')
+          toast.error('Failed to create credit card')
+          return
+        }
       }
-      onUpdate([...creditCards, newCard])
+      
+      reset()
+      setShowForm(false)
+    } catch (error) {
+      console.error('Error submitting credit card form:', error)
+      toast.error('An error occurred while saving the credit card')
     }
-    
-    reset()
-    setShowForm(false)
   }
 
   const handleEdit = (card: CreditCard) => {
@@ -88,8 +123,82 @@ export default function CreditCardManager({
     setShowForm(true)
   }
 
-  const handleDelete = (id: string) => {
-    onUpdate(creditCards.filter(card => card.id !== id))
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this credit card? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/credit-cards/${id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        onUpdate(creditCards.filter(card => card.id !== id))
+        toast.success('Credit card deleted successfully!')
+      } else {
+        console.error('Failed to delete credit card')
+        toast.error('Failed to delete credit card')
+      }
+    } catch (error) {
+      console.error('Error deleting credit card:', error)
+      toast.error('An error occurred while deleting the credit card')
+    }
+  }
+
+  const handlePayment = (card: CreditCard) => {
+    setPaymentCard(card)
+    setPaymentAmount('')
+  }
+
+  const handlePaymentSubmit = async () => {
+    if (!paymentCard || !paymentAmount) {
+      toast.error('Please enter a payment amount')
+      return
+    }
+
+    const amount = parseFloat(paymentAmount)
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Please enter a valid payment amount')
+      return
+    }
+
+    if (amount > paymentCard.usedAmount) {
+      toast.error('Payment amount cannot exceed the used amount')
+      return
+    }
+
+    try {
+      // Make payment API call
+      const response = await fetch(`/api/credit-cards/${paymentCard.id}/pay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: amount
+        }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        // Update the credit card in the list
+        const updatedCards = creditCards.map(card => 
+          card.id === paymentCard.id ? result.updatedCard : card
+        )
+        onUpdate(updatedCards)
+        setPaymentCard(null)
+        setPaymentAmount('')
+        toast.success('Payment recorded successfully!')
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Failed to process payment. Status:', response.status, 'Error:', errorData)
+        toast.error(`Failed to process payment: ${errorData.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Error processing payment:', error)
+      toast.error('An error occurred while processing the payment')
+    }
   }
 
   const calculateUtilization = (card: CreditCard) => {
@@ -193,6 +302,17 @@ export default function CreditCardManager({
                                 style={{ width: `${Math.min(utilization, 100)}%` }}
                               ></div>
                             </div>
+                          </div>
+
+                          {/* Pay Button */}
+                          <div className="pt-2">
+                            <button
+                              onClick={() => handlePayment(card)}
+                              className="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors duration-200 flex items-center justify-center gap-2"
+                            >
+                              <DollarSign className="w-4 h-4" />
+                              Make Payment
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -308,6 +428,63 @@ export default function CreditCardManager({
           )}
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {paymentCard && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold text-dark-950">
+                Make Payment - {paymentCard.name}
+              </h3>
+              <button
+                onClick={() => setPaymentCard(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">Current Used Amount: <span className="font-semibold">{formatCurrency(paymentCard.usedAmount)}</span></p>
+                <p className="text-sm text-gray-600 mb-4">Available Credit: <span className="font-semibold">{formatCurrency(paymentCard.availableAmount)}</span></p>
+              </div>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Payment Amount
+                </label>
+                <input
+                  type="number"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                  placeholder="Enter payment amount"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  min="0"
+                  max={paymentCard.usedAmount}
+                  step="0.01"
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setPaymentCard(null)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePaymentSubmit}
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-200"
+                >
+                  Process Payment
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

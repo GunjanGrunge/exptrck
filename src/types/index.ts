@@ -9,6 +9,8 @@ export interface Expense {
   paidAt?: Date;
   source?: string;
   destination?: string;
+  creditCardId?: string; // Optional: For credit card expenses
+  creditCard?: CreditCard; // Optional: Populated credit card info
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,7 +22,9 @@ export interface EMI {
   dueDate: number; // Day of the month (1-31)
   startDate: Date;
   totalInstallments: number;
+  paidInstallments: number;
   remainingInstallments: number;
+  lastPaymentDate?: Date;
   creditCardId?: string;
   createdAt: Date;
   updatedAt: Date;

@@ -230,20 +230,83 @@ export class PDFExportService {
       yPosition += 20;
     }
 
+    // EMI Payments Section (as expenses)
+    const emiExpenses = data.expenses.filter(expense => expense.category === 'emi');
+    if (emiExpenses.length > 0) {
+      // Check for new page
+      if (yPosition > 220) {
+        doc.addPage();
+        yPosition = 20;
+      }
+
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(4, 19, 42);
+      doc.text('EMI PAYMENTS MADE', margin, yPosition);
+      yPosition += 10;
+
+      const emiExpenseData = emiExpenses.map(expense => {
+        const amount = typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount;
+        return [
+          expense.title,
+          expense.destination || 'N/A',
+          this.formatDate(expense.paidAt || expense.createdAt),
+          this.formatCurrency(amount),
+        ];
+      });
+
+      const totalEMIExpenses = emiExpenses.reduce((sum, expense) => {
+        const amount = typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount;
+        return sum + amount;
+      }, 0);
+
+      autoTable(doc, {
+        startY: yPosition,
+        head: [['EMI Payment', 'Paid To', 'Date Paid', 'Amount']],
+        body: emiExpenseData,
+        foot: [['TOTAL EMI PAYMENTS', '', '', this.formatCurrency(totalEMIExpenses)]],
+        theme: 'grid',
+        headStyles: { 
+          fillColor: [255, 140, 0], // Orange color for EMI payments
+          fontSize: 10,
+          fontStyle: 'bold',
+          textColor: [255, 255, 255]
+        },
+        bodyStyles: {
+          fontSize: 9,
+          cellPadding: 4,
+        },
+        footStyles: { 
+          fillColor: [255, 140, 0], 
+          fontStyle: 'bold',
+          fontSize: 10,
+          textColor: [255, 255, 255]
+        },
+        columnStyles: {
+          3: { halign: 'right' }, // Amount column
+        },
+        margin: { left: margin, right: margin },
+      });
+      yPosition = (doc as any).lastAutoTable.finalY + 20;
+    }
+
     // Check for new page
     if (yPosition > 250) {
       doc.addPage();
       yPosition = 20;
     }
 
-    // EMIs Section
+    // EMIs Section - Outstanding Only
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(4, 19, 42); // squid ink color
-    doc.text('EMIs & INSTALLMENTS', margin, yPosition);
+    doc.text('OUTSTANDING EMIs', margin, yPosition);
     yPosition += 10;
 
-    const emiData = data.emis.map(emi => {
+    // Filter only EMIs with remaining installments
+    const outstandingEMIs = data.emis.filter(emi => emi.remainingInstallments > 0);
+    
+    const emiData = outstandingEMIs.map(emi => {
       const amount = typeof emi.amount === 'string' ? parseFloat(emi.amount) : emi.amount;
       return [
         emi.title || 'Untitled EMI',
@@ -255,7 +318,7 @@ export class PDFExportService {
       ];
     });
 
-    const totalEMIs = data.emis.reduce((sum, emi) => {
+    const totalOutstandingEMIs = outstandingEMIs.reduce((sum, emi) => {
       const amount = typeof emi.amount === 'string' ? parseFloat(emi.amount) : emi.amount;
       return sum + amount;
     }, 0);
@@ -265,7 +328,7 @@ export class PDFExportService {
         startY: yPosition,
         head: [['Title', 'Due Date', 'Amount', 'Remaining/Total', 'Start Date', 'Payment Mode']],
         body: emiData,
-        foot: [['TOTAL EMIs', '', this.formatCurrency(totalEMIs), '', '', '']],
+        foot: [['TOTAL OUTSTANDING EMIs', '', this.formatCurrency(totalOutstandingEMIs), '', '', '']],
         theme: 'grid',
         headStyles: { 
           fillColor: [4, 19, 42],
@@ -319,9 +382,9 @@ export class PDFExportService {
     const summaryItems = [
       ['Total Monthly Income:', this.formatCurrency(totalIncome)],
       ['Total Expenses:', this.formatCurrency(totalExpenses)],
-      ['Total EMIs:', this.formatCurrency(totalEMIs)],
-      ['Total Outgoing:', this.formatCurrency(totalExpenses + totalEMIs)],
-      ['Net Balance:', this.formatCurrency(totalIncome - totalExpenses - totalEMIs)],
+      ['Outstanding EMIs:', this.formatCurrency(totalOutstandingEMIs)],
+      ['Total Outgoing:', this.formatCurrency(totalExpenses + totalOutstandingEMIs)],
+      ['Net Balance:', this.formatCurrency(totalIncome - totalExpenses - totalOutstandingEMIs)],
     ];
 
     summaryItems.forEach(([label, value], index) => {
@@ -331,7 +394,7 @@ export class PDFExportService {
       
       // Color code the net balance
       if (label.includes('Net Balance')) {
-        const netBalance = totalIncome - totalExpenses - totalEMIs;
+        const netBalance = totalIncome - totalExpenses - totalOutstandingEMIs;
         doc.setTextColor(netBalance >= 0 ? 0 : 255, netBalance >= 0 ? 128 : 0, 0);
       }
       

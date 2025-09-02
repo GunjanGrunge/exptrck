@@ -1,6 +1,6 @@
 'use client'
 
-import { Edit, Trash2, Calendar } from 'lucide-react'
+import { Edit, Trash2, Calendar, Check } from 'lucide-react'
 import { Expense } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 
@@ -8,14 +8,18 @@ interface ExpenseListProps {
   expenses: Expense[]
   onEdit: (expense: Expense) => void
   onDelete: (id: string) => void
+  onMarkPaid?: (expense: Expense) => void
   showActions?: boolean
+  keyPrefix?: string
 }
 
 export default function ExpenseList({ 
   expenses, 
   onEdit, 
   onDelete, 
-  showActions = true 
+  onMarkPaid,
+  showActions = true,
+  keyPrefix = ''
 }: ExpenseListProps) {
   if (expenses.length === 0) {
     return (
@@ -53,7 +57,7 @@ export default function ExpenseList({
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {expenses.map((expense) => (
-            <tr key={expense.id} className="hover:bg-gray-50">
+            <tr key={`${keyPrefix}-${expense.id}`} className="hover:bg-gray-50">
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex flex-col">
                   <div className="text-sm font-medium text-gray-900">
@@ -69,6 +73,13 @@ export default function ExpenseList({
                       Recurring
                     </span>
                   )}
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs mt-1 w-fit ${
+                    expense.isPaid 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {expense.isPaid ? 'Paid' : 'Pending'}
+                  </span>
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
@@ -98,6 +109,15 @@ export default function ExpenseList({
               {showActions && (
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-2">
+                    {!expense.isPaid && onMarkPaid && (
+                      <button
+                        onClick={() => onMarkPaid(expense)}
+                        className="text-green-600 hover:text-green-900"
+                        title="Mark as Paid"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => onEdit(expense)}
                       className="text-primary-600 hover:text-primary-900"

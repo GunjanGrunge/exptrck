@@ -11,6 +11,7 @@ interface EMIListProps {
   onDelete: (id: string) => void
   onUpdate: (emi: EMI) => void
   showActions?: boolean
+  keyPrefix?: string
 }
 
 export default function EMIList({ 
@@ -18,7 +19,8 @@ export default function EMIList({
   onEdit, 
   onDelete, 
   onUpdate,
-  showActions = true 
+  showActions = true,
+  keyPrefix = ''
 }: EMIListProps) {
   
   const handleMarkPaid = (emi: EMI) => {
@@ -73,7 +75,7 @@ export default function EMIList({
             const paidInstallments = emi.totalInstallments - remainingInstallments;
             
             return (
-              <tr key={emi.id} className="hover:bg-gray-50">
+              <tr key={`${keyPrefix}-${emi.id}`} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex flex-col">
                     <div className="text-sm font-medium text-gray-900">

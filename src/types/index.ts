@@ -5,6 +5,8 @@ export interface Expense {
   dueDate: number; // Day of the month (1-31)
   category: 'expense' | 'emi' | 'transfer';
   isRecurring: boolean;
+  isPaid: boolean;
+  paidAt?: Date;
   source?: string;
   destination?: string;
   createdAt: Date;

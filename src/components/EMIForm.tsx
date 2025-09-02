@@ -37,7 +37,7 @@ export default function EMIForm({ onClose, onSubmit, emi }: EMIFormProps) {
       title: emi.title,
       amount: emi.amount,
       dueDate: emi.dueDate,
-      startDate: emi.startDate.toISOString().split('T')[0],
+      startDate: new Date(emi.startDate).toISOString().split('T')[0],
       totalInstallments: emi.totalInstallments,
       paidInstallments: emi.totalInstallments - emi.remainingInstallments,
       creditCardId: emi.creditCardId || '',

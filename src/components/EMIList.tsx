@@ -85,7 +85,7 @@ export default function EMIList({
                       </div>
                     )}
                     <div className="text-xs text-gray-500">
-                      Started: {emi.startDate.toLocaleDateString()}
+                      Started: {new Date(emi.startDate).toLocaleDateString()}
                     </div>
                   </div>
                 </td>

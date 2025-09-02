@@ -4,7 +4,7 @@ import { EMI } from '@/types';
 export function calculateRemainingEMIs(emi: EMI): number {
   const currentDate = new Date();
   const currentMonthStart = startOfMonth(currentDate);
-  const emiStartMonth = startOfMonth(emi.startDate);
+  const emiStartMonth = startOfMonth(new Date(emi.startDate));
   
   // Calculate how many months have passed since EMI started
   const monthsPassed = Math.max(0, differenceInMonths(currentMonthStart, emiStartMonth));
@@ -53,7 +53,7 @@ export function isEMIActive(emi: EMI): boolean {
   // EMI is active if:
   // 1. Current date is after start date
   // 2. There are remaining installments
-  return isAfter(currentDate, emi.startDate) && remaining > 0;
+  return isAfter(currentDate, new Date(emi.startDate)) && remaining > 0;
 }
 
 export function calculateTotalEMIAmount(emis: EMI[]): number {

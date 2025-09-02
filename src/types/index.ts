@@ -6,11 +6,11 @@ export interface Expense {
   category: 'expense' | 'emi' | 'transfer';
   isRecurring: boolean;
   isPaid: boolean;
-  paidAt?: Date;
-  source?: string;
-  destination?: string;
-  creditCardId?: string; // Optional: For credit card expenses
-  creditCard?: CreditCard; // Optional: Populated credit card info
+  paidAt: Date | null;
+  source: string | null;
+  destination: string | null;
+  creditCardId: string | null; // Optional: For credit card expenses
+  creditCard?: CreditCard; // Optional: Populated credit card info (not from Prisma directly)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,7 +25,7 @@ export interface EMI {
   paidInstallments: number;
   remainingInstallments: number;
   lastPaymentDate: Date | null;
-  creditCardId?: string;
+  creditCardId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,10 +35,10 @@ export interface Income {
   source: string;
   amount: number;
   isRecurring: boolean;
-  frequency?: 'monthly' | 'weekly' | 'yearly' | 'daily' | 'one-time';
-  category?: 'salary' | 'freelance' | 'investment' | 'business' | 'rental' | 'other';
-  description?: string;
-  nextPaymentDate?: Date;
+  frequency: string | null; // 'monthly' | 'weekly' | 'yearly' | 'daily' | 'one-time'
+  category: string | null; // 'salary' | 'freelance' | 'investment' | 'business' | 'rental' | 'other'
+  description: string | null;
+  nextPaymentDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -29,7 +29,10 @@ export interface Income {
   source: string;
   amount: number;
   isRecurring: boolean;
-  frequency?: 'monthly' | 'weekly' | 'yearly';
+  frequency?: 'monthly' | 'weekly' | 'yearly' | 'daily' | 'one-time';
+  category?: 'salary' | 'freelance' | 'investment' | 'business' | 'rental' | 'other';
+  description?: string;
+  nextPaymentDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

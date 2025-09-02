@@ -9,6 +9,7 @@ import ExpenseList from './ExpenseList'
 import EMIList from './EMIList'
 import EMIForm from './EMIForm'
 import IncomeForm from './IncomeForm'
+import IncomeList from './IncomeList'
 import CreditCardManager from './CreditCardManager'
 import { Expense, EMI, Income, CreditCard, MonthlyBudget } from '@/types'
 
@@ -22,7 +23,7 @@ export default function Dashboard() {
   const [showEMIForm, setShowEMIForm] = useState(false)
   const [showIncomeForm, setShowIncomeForm] = useState(false)
   const [showCreditCardManager, setShowCreditCardManager] = useState(false)
-  const [activeTab, setActiveTab] = useState<'expenses' | 'emis' | 'overview'>('overview')
+  const [activeTab, setActiveTab] = useState<'expenses' | 'emis' | 'income' | 'overview'>('overview')
   const [loading, setLoading] = useState(true)
 
   // Fetch data from API
@@ -156,6 +157,37 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Error adding income:', error)
+    }
+  }
+
+  const handleUpdateIncome = async (income: Income) => {
+    try {
+      const response = await fetch(`/api/income/${income.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(income)
+      })
+
+      if (response.ok) {
+        const updated = await response.json()
+        setIncomes(prev => prev.map(i => i.id === income.id ? updated : i))
+      }
+    } catch (error) {
+      console.error('Error updating income:', error)
+    }
+  }
+
+  const handleDeleteIncome = async (id: string) => {
+    try {
+      const response = await fetch(`/api/income/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setIncomes(prev => prev.filter(income => income.id !== id))
+      }
+    } catch (error) {
+      console.error('Error deleting income:', error)
     }
   }
 
@@ -374,6 +406,16 @@ export default function Dashboard() {
             >
               EMIs
             </button>
+            <button
+              onClick={() => setActiveTab('income')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'income'
+                  ? 'border-primary-400 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Income
+            </button>
           </nav>
         </div>
 
@@ -416,6 +458,15 @@ export default function Dashboard() {
             onEdit={handleUpdateEMI} 
             onDelete={handleDeleteEMI}
             onUpdate={handleMarkEMIPaid}
+          />
+        )}
+
+        {activeTab === 'income' && (
+          <IncomeList 
+            incomes={incomes} 
+            onEdit={handleUpdateIncome} 
+            onDelete={handleDeleteIncome}
+            onAdd={() => setShowIncomeForm(true)}
           />
         )}
       </main>

@@ -1,0 +1,101 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String?
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  expenses    Expense[]
+    emis   Emi[]
+  incomes     Income[]
+  creditCards CreditCard[]
+
+  @@map("users")
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  title       String
+  amount      Float
+  dueDate     Int      // Day of month (1-31)
+  category    String   // 'expense' | 'emi' | 'transfer'
+  isRecurring Boolean  @default(false)
+  isPaid      Boolean  @default(false)
+  paidAt      DateTime?
+  source      String?
+  destination String?
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("expenses")
+}
+
+model Emi {
+  id                     String   @id @default(cuid())
+  title                  String
+  amount                 Float
+  dueDate                Int      // Day of month (1-31)
+  startDate              DateTime
+  totalInstallments      Int
+  paidInstallments       Int      @default(0)
+  remainingInstallments  Int
+  lastPaymentDate        DateTime?
+  creditCardId           String?
+  userId                 String
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditCard CreditCard? @relation(fields: [creditCardId], references: [id])
+
+  @@map("emis")
+}
+
+model Income {
+  id          String   @id @default(cuid())
+  source      String
+  amount      Float
+  isRecurring Boolean  @default(true)
+  frequency   String?  // 'monthly' | 'weekly' | 'yearly'
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("incomes")
+}
+
+model CreditCard {
+  id              String   @id @default(cuid())
+  name            String
+  limit           Float
+  usedAmount      Float    @default(0)
+  availableAmount Float
+  dueDate         Int      // Day of month (1-31)
+  userId          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emis Emi[]
+
+  @@map("credit_cards")
+}

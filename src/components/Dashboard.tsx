@@ -21,7 +21,7 @@ import ExportModal from './ExportModal'
 import { Expense, EMI, Income, CreditCard, MonthlyBudget } from '@/types'
 
 export default function Dashboard() {
-  const { user } = useUser()
+  const { user, isLoaded } = useUser()
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [emis, setEMIs] = useState<EMI[]>([])
   const [incomes, setIncomes] = useState<Income[]>([])
@@ -41,6 +41,7 @@ export default function Dashboard() {
   const fetchData = async () => {
     if (!user?.id) {
       console.log('No user ID available for data fetch')
+      setLoading(false)
       return
     }
 
@@ -102,21 +103,26 @@ export default function Dashboard() {
     }
   }
 
-  // Load data when user is available
+  // Load data when user is available and Clerk has finished loading
   useEffect(() => {
-    console.log('User effect triggered. User ID:', user?.id)
+    console.log('Auth state changed. isLoaded:', isLoaded, 'User ID:', user?.id)
+    
+    if (!isLoaded) {
+      // Clerk is still loading, keep our loading state true
+      console.log('Clerk still loading...')
+      return
+    }
+    
     if (user?.id) {
+      // User is authenticated, fetch data
+      console.log('User authenticated, fetching data...')
       fetchData()
+    } else {
+      // No user (not authenticated), stop loading
+      console.log('No user, stopping loading state')
+      setLoading(false)
     }
-  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Also trigger on user.isLoaded to handle authentication state changes
-  useEffect(() => {
-    if (user?.id && !loading && expenses.length === 0) {
-      console.log('Backup data fetch triggered')
-      fetchData()
-    }
-  }, [user?.id, loading]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isLoaded, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Calculate monthly budget
   const calculateMonthlyBudget = (): MonthlyBudget => {
@@ -493,6 +499,18 @@ export default function Dashboard() {
             </motion.p>
           </div>
         </FadeIn>
+      </div>
+    )
+  }
+
+  // Show loading spinner while Clerk is loading authentication state
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-400 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Loading your dashboard...</p>
+        </div>
       </div>
     )
   }

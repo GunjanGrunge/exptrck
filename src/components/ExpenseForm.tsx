@@ -238,7 +238,7 @@ export default function ExpenseForm({ onClose, onSubmit, expense }: ExpenseFormP
           {category === 'credit_card_payment' && (
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
               <p className="text-sm text-blue-700">
-                💡 <strong>Credit Card Payment:</strong> This will be recorded as an expense and will increase your selected credit card's available balance.
+                💡 <strong>Credit Card Payment:</strong> This will be recorded as an expense and will increase your selected credit card&apos;s available balance.
               </p>
             </div>
           )}
@@ -246,7 +246,7 @@ export default function ExpenseForm({ onClose, onSubmit, expense }: ExpenseFormP
           {paymentMethod === 'credit_card' && category !== 'credit_card_payment' && (
             <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
               <p className="text-sm text-yellow-700">
-                💳 <strong>Credit Card Expense:</strong> This will reduce your credit card's available balance and won't affect your cash/bank balance.
+                💳 <strong>Credit Card Expense:</strong> This will reduce your credit card&apos;s available balance and won&apos;t affect your cash/bank balance.
               </p>
             </div>
           )}

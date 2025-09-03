@@ -845,7 +845,7 @@ export default function Dashboard() {
           <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
             <h3 className="font-semibold mb-2">Calculation Breakdown:</h3>
             <p>Income: ₹{budget.totalIncome.toLocaleString()} - Cash/Bank Expenses: ₹{budget.totalExpenses.toLocaleString()} - Outstanding EMIs (This Month): ₹{budget.totalEMIs.toLocaleString()} = Balance: ₹{budget.balance.toLocaleString()}</p>
-            <p className="text-xs mt-1">Note: Balance shows your actual cash/bank balance. Credit card purchases don't reduce this directly - only credit card payments, EMI payments, and cash expenses do.</p>
+            <p className="text-xs mt-1">Note: Balance shows your actual cash/bank balance. Credit card purchases don&apos;t reduce this directly - only credit card payments, EMI payments, and cash expenses do.</p>
           </div>
         </SlideUp>
 

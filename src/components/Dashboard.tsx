@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useUser, UserButton } from '@clerk/nextjs'
-import { Plus, CreditCard as CreditCardIcon, TrendingUp, TrendingDown, Calendar, Download, LogOut, Wallet, DollarSign } from 'lucide-react'
+import { Plus, CreditCard as CreditCardIcon, TrendingUp, TrendingDown, Calendar, Download, LogOut, Wallet, DollarSign, ArrowUpCircle, ArrowDownCircle, Banknote, PiggyBank } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { formatCurrency } from '@/lib/utils'
@@ -10,6 +10,7 @@ import { updateEMIRemainingInstallments } from '@/lib/emi-utils'
 import { AnimatedCard, FadeIn, SlideUp, StaggerContainer, StaggerItem } from './ui/AnimatedComponents'
 import { AnimatedButton } from './ui/AnimatedButton'
 import { Skeleton, TableSkeleton, CardSkeleton } from './ui/Skeleton'
+import Logo from './ui/Logo'
 import ExpenseForm from './ExpenseForm'
 import ExpenseList from './ExpenseList'
 import EMIList from './EMIList'
@@ -516,18 +517,34 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 relative">
+      {/* Dotted Background Pattern */}
+      <div 
+        className="fixed inset-0 opacity-30 pointer-events-none z-0"
+        style={{
+          backgroundImage: `radial-gradient(circle, #759ab7 1px, transparent 1px)`,
+          backgroundSize: '20px 20px',
+          backgroundPosition: '0 0, 10px 10px'
+        }}
+      />
+      
+      {/* Content Wrapper */}
+      <div className="relative z-10">
       {/* Header */}
-      <AnimatedCard className="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-xl border-0 rounded-none">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <AnimatedCard className="sticky top-0 z-50 bg-white/20 backdrop-blur-xl shadow-2xl border-0 rounded-none border-b border-white/10">
+        <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex justify-between items-center h-20">
-            <SlideUp className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center">
-                <Wallet className="w-6 h-6 text-white" />
+            <SlideUp className="flex items-center space-x-4">
+              <Logo size="lg" />
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-[#04132a] via-[#759ab7] to-[#ce6e55] bg-clip-text text-transparent">
+                  ExpenseTracker
+                </h1>
+                <p className="text-xs text-gray-600/80 font-medium tracking-wider uppercase">
+                  Financial Management
+                </p>
               </div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
-                Expense Tracker
-              </h1>
             </SlideUp>
             <FadeIn delay={0.2} className="flex items-center space-x-4">
               <div className="text-right">
@@ -648,7 +665,7 @@ export default function Dashboard() {
                     className="w-14 h-14 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
                     whileHover={{ rotate: 5 }}
                   >
-                    <TrendingUp className="w-7 h-7 text-green-600" />
+                    <ArrowUpCircle className="w-7 h-7 text-green-600" />
                   </motion.div>
                 </div>
               </AnimatedCard>
@@ -672,7 +689,7 @@ export default function Dashboard() {
                     className="w-14 h-14 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
                     whileHover={{ rotate: -5 }}
                   >
-                    <TrendingDown className="w-7 h-7 text-red-600" />
+                    <ArrowDownCircle className="w-7 h-7 text-red-600" />
                   </motion.div>
                 </div>
               </AnimatedCard>
@@ -696,7 +713,7 @@ export default function Dashboard() {
                     className="w-14 h-14 bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
                     whileHover={{ rotate: 5 }}
                   >
-                    <Calendar className="w-7 h-7 text-orange-600" />
+                    <Banknote className="w-7 h-7 text-orange-600" />
                   </motion.div>
                 </div>
               </AnimatedCard>
@@ -726,7 +743,7 @@ export default function Dashboard() {
                     } rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
                     whileHover={{ rotate: budget.balance >= 0 ? 5 : -5 }}
                   >
-                    <DollarSign className={`w-7 h-7 ${
+                    <PiggyBank className={`w-7 h-7 ${
                       budget.balance >= 0 ? 'text-blue-600' : 'text-red-600'
                     }`} />
                   </motion.div>
@@ -955,6 +972,23 @@ export default function Dashboard() {
           />
         )}
       </AnimatePresence>
+      
+      {/* Footer */}
+      <footer className="mt-16 py-8 border-t border-gray-200/50 bg-white/30 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <motion.p 
+              className="text-sm text-gray-500 font-medium"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              A <span className="text-[#759ab7] font-semibold">Vayu</span> innovation
+            </motion.p>
+          </div>
+        </div>
+      </footer>
+      </div>
     </div>
   )
 }

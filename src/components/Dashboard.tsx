@@ -129,12 +129,42 @@ export default function Dashboard() {
   const calculateMonthlyBudget = (): MonthlyBudget => {
     const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0)
     
-    // Separate regular expenses from EMI payment expenses
-    const regularExpenses = expenses.filter(expense => expense.category !== 'emi')
-    const emiPaymentExpenses = expenses.filter(expense => expense.category === 'emi')
+    // Separate different types of expenses based on their impact on cash/bank balance
+    const cashBankExpenses = expenses.filter(expense => {
+      // Include expenses that affect cash/bank balance:
+      // 1. Regular expenses without credit card (cash/bank payment)
+      // 2. Credit card payments (money leaving your bank to pay credit card)
+      // 3. EMI payments (money leaving your bank)
+      // 4. Transfer expenses (money movement)
+      
+      if (expense.category === 'credit_card_payment') {
+        return true // Credit card payments reduce cash balance
+      }
+      
+      if (expense.category === 'emi') {
+        return true // EMI payments reduce cash balance
+      }
+      
+      if (expense.category === 'transfer') {
+        return true // Transfers affect cash balance
+      }
+      
+      // For regular expenses, only count if NOT paid by credit card
+      if (expense.category === 'expense' && !expense.creditCardId) {
+        return true // Cash/bank paid expenses reduce cash balance
+      }
+      
+      return false
+    })
     
-    const totalRegularExpenses = regularExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-    const totalEMIPayments = emiPaymentExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+    const creditCardOnlyExpenses = expenses.filter(expense => 
+      expense.creditCardId && 
+      expense.category !== 'credit_card_payment' && 
+      expense.category !== 'emi'
+    )
+    
+    const totalCashBankExpenses = cashBankExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+    const totalCreditCardExpenses = creditCardOnlyExpenses.reduce((sum, expense) => sum + expense.amount, 0)
     
     // Get current month and year
     const currentDate = new Date()
@@ -167,19 +197,15 @@ export default function Dashboard() {
       })
       .reduce((sum, emi) => sum + emi.amount, 0)
     
-    // Total expenses includes both regular expenses and EMI payments
-    const totalExpenses = totalRegularExpenses + totalEMIPayments
-    
-    // Balance calculation: Income - All Expenses - Current Month Outstanding EMIs
-    // Note: EMI payments are already in expenses, outstanding EMIs are unpaid current month obligations
-    const balance = totalIncome - totalExpenses - currentMonthOutstandingEMIs
+    // Balance calculation: Income - Cash/Bank Expenses - Current Month Outstanding EMIs
+    // Note: Credit card expenses don't affect cash balance directly, only payments do
+    const balance = totalIncome - totalCashBankExpenses - currentMonthOutstandingEMIs
 
     // Debug logging
     console.log('Budget Calculation:', {
       totalIncome,
-      totalRegularExpenses,
-      totalEMIPayments,
-      totalExpenses,
+      totalCashBankExpenses,
+      totalCreditCardExpenses,
       currentMonthOutstandingEMIs,
       balance,
       currentMonth,
@@ -187,12 +213,14 @@ export default function Dashboard() {
       currentDay,
       incomeCount: incomes.length,
       expenseCount: expenses.length,
-      emiCount: emis.length
+      emiCount: emis.length,
+      cashBankExpensesCount: cashBankExpenses.length,
+      creditCardExpensesCount: creditCardOnlyExpenses.length
     })
 
     return {
       totalIncome,
-      totalExpenses,
+      totalExpenses: totalCashBankExpenses, // Show total cash/bank expenses that affect balance
       totalEMIs: currentMonthOutstandingEMIs, // Only show current month outstanding EMIs
       balance,
       month: new Date().getMonth() + 1,
@@ -752,11 +780,72 @@ export default function Dashboard() {
             </StaggerItem>
           </StaggerContainer>
           
+          {/* Summary Section */}
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Payment Method Breakdown */}
+            <AnimatedCard className="p-6 bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <CreditCardIcon className="mr-2 text-purple-600" size={20} />
+                Payment Method Breakdown
+              </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Cash/Bank Expenses:</span>
+                  <span className="font-semibold text-red-600">₹{budget.totalExpenses.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Credit Card Expenses:</span>
+                  <span className="font-semibold text-orange-600">
+                    ₹{expenses
+                      .filter(expense => expense.creditCardId !== null)
+                      .reduce((sum, expense) => sum + expense.amount, 0)
+                      .toLocaleString()}
+                  </span>
+                </div>
+                <div className="border-t pt-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-gray-800">Total Expenses:</span>
+                    <span className="font-bold text-gray-900">
+                      ₹{(budget.totalExpenses + expenses
+                        .filter(expense => expense.creditCardId !== null)
+                        .reduce((sum, expense) => sum + expense.amount, 0))
+                        .toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </AnimatedCard>
+
+            {/* Monthly EMI Summary */}
+            <AnimatedCard className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <Calendar className="mr-2 text-blue-600" size={20} />
+                EMI Summary
+              </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">EMIs This Month:</span>
+                  <span className="font-semibold text-blue-600">₹{budget.totalEMIs.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Total EMI Count:</span>
+                  <span className="font-semibold text-gray-700">{emis.length}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Active EMIs:</span>
+                  <span className="font-semibold text-green-600">
+                    {emis.filter(emi => emi.remainingInstallments > 0).length}
+                  </span>
+                </div>
+              </div>
+            </AnimatedCard>
+          </div>
+
           {/* Debugging breakdown */}
           <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
             <h3 className="font-semibold mb-2">Calculation Breakdown:</h3>
-            <p>Income: ₹{budget.totalIncome.toLocaleString()} - Expenses: ₹{budget.totalExpenses.toLocaleString()} - Outstanding EMIs (This Month): ₹{budget.totalEMIs.toLocaleString()} = Balance: ₹{budget.balance.toLocaleString()}</p>
-            <p className="text-xs mt-1">Note: Outstanding EMIs shows only unpaid EMIs due this month. As you mark EMIs as paid, this amount decreases.</p>
+            <p>Income: ₹{budget.totalIncome.toLocaleString()} - Cash/Bank Expenses: ₹{budget.totalExpenses.toLocaleString()} - Outstanding EMIs (This Month): ₹{budget.totalEMIs.toLocaleString()} = Balance: ₹{budget.balance.toLocaleString()}</p>
+            <p className="text-xs mt-1">Note: Balance shows your actual cash/bank balance. Credit card purchases don't reduce this directly - only credit card payments, EMI payments, and cash expenses do.</p>
           </div>
         </SlideUp>
 

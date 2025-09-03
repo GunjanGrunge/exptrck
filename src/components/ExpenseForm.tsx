@@ -1,21 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { X } from 'lucide-react'
-import { Expense } from '@/types'
+import { Expense, CreditCard } from '@/types'
 import { generateId } from '@/lib/utils'
 
 const expenseSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   amount: z.number().min(0.01, 'Amount must be greater than 0'),
   dueDate: z.number().min(1).max(31),
-  category: z.enum(['expense', 'emi', 'transfer']),
+  category: z.enum(['expense', 'emi', 'transfer', 'credit_card_payment']),
   isRecurring: z.boolean(),
   source: z.string().optional(),
   destination: z.string().optional(),
+  paymentMethod: z.enum(['cash', 'credit_card']),
+  creditCardId: z.string().optional(),
 })
 
 type ExpenseFormData = z.infer<typeof expenseSchema>
@@ -27,10 +29,13 @@ interface ExpenseFormProps {
 }
 
 export default function ExpenseForm({ onClose, onSubmit, expense }: ExpenseFormProps) {
+  const [creditCards, setCreditCards] = useState<CreditCard[]>([])
+  const [loading, setLoading] = useState(false)
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
@@ -42,33 +47,87 @@ export default function ExpenseForm({ onClose, onSubmit, expense }: ExpenseFormP
       isRecurring: expense.isRecurring,
       source: expense.source || '',
       destination: expense.destination || '',
+      paymentMethod: expense.creditCardId ? 'credit_card' : 'cash',
+      creditCardId: expense.creditCardId || '',
     } : {
       category: 'expense',
       isRecurring: false,
       dueDate: 1,
+      paymentMethod: 'cash',
     }
   })
 
   const category = watch('category')
+  const paymentMethod = watch('paymentMethod')
 
-  const onFormSubmit = (data: ExpenseFormData) => {
-    const newExpense: Expense = {
-      id: expense?.id || generateId(),
-      title: data.title,
-      amount: data.amount,
-      dueDate: data.dueDate,
-      category: data.category,
-      isRecurring: data.isRecurring,
-      isPaid: expense?.isPaid || false,
-      paidAt: expense?.paidAt || null,
-      source: data.source || null,
-      destination: data.destination || null,
-      creditCardId: expense?.creditCardId || null,
-      createdAt: expense?.createdAt || new Date(),
-      updatedAt: new Date(),
+  // Fetch credit cards
+  useEffect(() => {
+    const fetchCreditCards = async () => {
+      try {
+        const response = await fetch('/api/credit-cards')
+        if (response.ok) {
+          const cards = await response.json()
+          setCreditCards(cards)
+        }
+      } catch (error) {
+        console.error('Error fetching credit cards:', error)
+      }
     }
-    
-    onSubmit(newExpense)
+    fetchCreditCards()
+  }, [])
+
+  const onFormSubmit = async (data: ExpenseFormData) => {
+    setLoading(true)
+    try {
+      const newExpense: Expense = {
+        id: expense?.id || generateId(),
+        title: data.title,
+        amount: data.amount,
+        dueDate: data.dueDate,
+        category: data.category,
+        isRecurring: data.isRecurring,
+        isPaid: expense?.isPaid || false,
+        paidAt: expense?.paidAt || null,
+        source: data.source || null,
+        destination: data.destination || null,
+        creditCardId: data.paymentMethod === 'credit_card' ? data.creditCardId || null : null,
+        createdAt: expense?.createdAt || new Date(),
+        updatedAt: new Date(),
+      }
+      
+      // If it's a credit card expense or payment, we need to update the card balance
+      if (data.paymentMethod === 'credit_card' && data.creditCardId) {
+        await updateCreditCardBalance(data.creditCardId, data.amount, data.category === 'credit_card_payment')
+      }
+      
+      onSubmit(newExpense)
+    } catch (error) {
+      console.error('Error submitting expense:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updateCreditCardBalance = async (creditCardId: string, amount: number, isPayment: boolean) => {
+    try {
+      const response = await fetch(`/api/credit-cards/${creditCardId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: isPayment ? 'payment' : 'expense',
+          amount: amount,
+        }),
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to update credit card balance')
+      }
+    } catch (error) {
+      console.error('Error updating credit card balance:', error)
+      throw error
+    }
   }
 
   return (
@@ -143,8 +202,54 @@ export default function ExpenseForm({ onClose, onSubmit, expense }: ExpenseFormP
               <option value="expense">Regular Expense</option>
               <option value="emi">EMI</option>
               <option value="transfer">Transfer</option>
+              <option value="credit_card_payment">Credit Card Payment</option>
             </select>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Payment Method
+            </label>
+            <select {...register('paymentMethod')} className="input-field">
+              <option value="cash">Cash/Bank Account</option>
+              <option value="credit_card">Credit Card</option>
+            </select>
+          </div>
+
+          {paymentMethod === 'credit_card' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Select Credit Card
+              </label>
+              <select {...register('creditCardId')} className="input-field" required>
+                <option value="">Choose a credit card</option>
+                {creditCards.map((card) => (
+                  <option key={card.id} value={card.id}>
+                    {card.name} - Available: ₹{card.availableAmount.toLocaleString()}
+                  </option>
+                ))}
+              </select>
+              {errors.creditCardId && (
+                <p className="text-red-500 text-sm mt-1">Please select a credit card</p>
+              )}
+            </div>
+          )}
+
+          {category === 'credit_card_payment' && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-700">
+                💡 <strong>Credit Card Payment:</strong> This will be recorded as an expense and will increase your selected credit card's available balance.
+              </p>
+            </div>
+          )}
+
+          {paymentMethod === 'credit_card' && category !== 'credit_card_payment' && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-700">
+                💳 <strong>Credit Card Expense:</strong> This will reduce your credit card's available balance and won't affect your cash/bank balance.
+              </p>
+            </div>
+          )}
 
           {category === 'transfer' && (
             <>
@@ -195,9 +300,10 @@ export default function ExpenseForm({ onClose, onSubmit, expense }: ExpenseFormP
             </button>
             <button
               type="submit"
-              className="flex-1 btn-primary"
+              disabled={loading}
+              className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {expense ? 'Update' : 'Add'} Expense
+              {loading ? 'Processing...' : (expense ? 'Update' : 'Add')} Expense
             </button>
           </div>
         </form>

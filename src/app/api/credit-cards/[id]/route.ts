@@ -25,6 +25,53 @@ export async function PUT(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    // Handle different action types
+    if (data.action) {
+      // Get current credit card
+      const currentCard = await prisma.creditCard.findFirst({
+        where: { 
+          id: id,
+          userId: user.id 
+        }
+      })
+
+      if (!currentCard) {
+        return NextResponse.json({ error: 'Credit card not found' }, { status: 404 })
+      }
+
+      let newUsedAmount = currentCard.usedAmount
+
+      if (data.action === 'expense') {
+        // Credit card expense - increase used amount (decrease available)
+        newUsedAmount = currentCard.usedAmount + data.amount
+        
+        // Check if it exceeds the limit
+        if (newUsedAmount > currentCard.limit) {
+          return NextResponse.json({ 
+            error: `Insufficient credit limit. Available: ₹${currentCard.availableAmount}, Required: ₹${data.amount}` 
+          }, { status: 400 })
+        }
+      } else if (data.action === 'payment') {
+        // Credit card payment - decrease used amount (increase available)
+        newUsedAmount = Math.max(0, currentCard.usedAmount - data.amount)
+      }
+
+      const newAvailableAmount = currentCard.limit - newUsedAmount
+
+      // Update credit card with new amounts
+      const updatedCard = await prisma.creditCard.update({
+        where: { id: id },
+        data: {
+          usedAmount: newUsedAmount,
+          availableAmount: newAvailableAmount,
+          updatedAt: new Date()
+        }
+      })
+
+      return NextResponse.json(updatedCard)
+    }
+
+    // Original update logic for full credit card updates
     // Calculate available amount
     const availableAmount = data.limit - data.usedAmount
 

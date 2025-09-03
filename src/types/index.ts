@@ -3,7 +3,7 @@ export interface Expense {
   title: string;
   amount: number;
   dueDate: number; // Day of the month (1-31)
-  category: 'expense' | 'emi' | 'transfer';
+  category: 'expense' | 'emi' | 'transfer' | 'credit_card_payment';
   isRecurring: boolean;
   isPaid: boolean;
   paidAt: Date | null;

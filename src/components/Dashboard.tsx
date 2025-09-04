@@ -175,14 +175,14 @@ export default function Dashboard() {
     // Calculate outstanding EMIs for current month only
     // An EMI is outstanding for current month if:
     // 1. It has remaining installments > 0
-    // 2. Its due date has passed or is today in current month
+    // 2. Its due date is today or in the future (not past due)
     // 3. It hasn't been paid this month (check lastPaymentDate)
     const currentMonthOutstandingEMIs = emis
       .filter(emi => {
         if (emi.remainingInstallments <= 0) return false
         
-        // Check if EMI is due this month
-        const isDueThisMonth = emi.dueDate <= currentDay
+        // Check if EMI is due this month (due date should be today or future)
+        const isDueThisMonth = emi.dueDate >= currentDay
         if (!isDueThisMonth) return false
         
         // Check if already paid this month
@@ -506,6 +506,94 @@ export default function Dashboard() {
     }
   }
 
+  // Reset functions for new month
+  const handleResetIncomeAndExpenses = async () => {
+    const confirmReset = window.confirm(
+      'Are you sure you want to reset all income and expenses for the new month? This will:\n\n' +
+      '• Delete all current month income entries\n' +
+      '• Delete all current month expenses\n' +
+      '• Keep EMIs and credit cards unchanged\n' +
+      '• Current balance will be preserved\n\n' +
+      'This action cannot be undone!'
+    )
+
+    if (!confirmReset) return
+
+    const toastId = toast.loading('Resetting income and expenses...')
+    
+    try {
+      // Delete all income entries
+      const incomePromises = incomes.map(income => 
+        fetch(`/api/income/${income.id}`, { method: 'DELETE' })
+      )
+      
+      // Delete all expenses
+      const expensePromises = expenses.map(expense => 
+        fetch(`/api/expenses/${expense.id}`, { method: 'DELETE' })
+      )
+
+      await Promise.all([...incomePromises, ...expensePromises])
+
+      // Refresh data
+      setIncomes([])
+      setExpenses([])
+      
+      toast.success('Income and expenses reset successfully!', { id: toastId })
+      
+      // Refresh all data to ensure consistency
+      await fetchData()
+    } catch (error) {
+      console.error('Error resetting data:', error)
+      toast.error('Failed to reset data', { id: toastId })
+    }
+  }
+
+  const handleResetIncome = async () => {
+    const confirmReset = window.confirm(
+      'Are you sure you want to reset all income entries? This action cannot be undone!'
+    )
+
+    if (!confirmReset) return
+
+    const toastId = toast.loading('Resetting income...')
+    
+    try {
+      const promises = incomes.map(income => 
+        fetch(`/api/income/${income.id}`, { method: 'DELETE' })
+      )
+
+      await Promise.all(promises)
+      setIncomes([])
+      toast.success('Income reset successfully!', { id: toastId })
+    } catch (error) {
+      console.error('Error resetting income:', error)
+      toast.error('Failed to reset income', { id: toastId })
+    }
+  }
+
+  const handleResetExpenses = async () => {
+    const confirmReset = window.confirm(
+      'Are you sure you want to reset all expenses? This action cannot be undone!'
+    )
+
+    if (!confirmReset) return
+
+    const toastId = toast.loading('Resetting expenses...')
+    
+    try {
+      const promises = expenses.map(expense => 
+        fetch(`/api/expenses/${expense.id}`, { method: 'DELETE' })
+      )
+
+      await Promise.all(promises)
+      setExpenses([])
+      toast.success('Expenses reset successfully!', { id: toastId })
+    } catch (error) {
+      console.error('Error resetting expenses:', error)
+      toast.error('Failed to reset expenses', { id: toastId })
+    }
+  }
+
   const budget = calculateMonthlyBudget()
 
   if (loading) {
@@ -668,7 +756,40 @@ export default function Dashboard() {
                 Export PDF
               </AnimatedButton>
             </StaggerItem>
+            <StaggerItem>
+              <AnimatedButton
+                onClick={handleResetIncomeAndExpenses}
+                variant="danger"
+                size="lg"
+                icon={<LogOut className="w-5 h-5" />}
+                className="bg-red-500 hover:bg-red-600 text-white"
+              >
+                Reset All
+              </AnimatedButton>
+            </StaggerItem>
           </StaggerContainer>
+        </SlideUp>
+
+        {/* Additional Reset Options */}
+        <SlideUp delay={0.15} className="mb-8">
+          <div className="flex justify-end gap-2">
+            <AnimatedButton
+              onClick={handleResetIncome}
+              variant="secondary"
+              size="sm"
+              className="text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 border-orange-300"
+            >
+              Reset Income Only
+            </AnimatedButton>
+            <AnimatedButton
+              onClick={handleResetExpenses}
+              variant="secondary"
+              size="sm"
+              className="text-xs bg-red-100 hover:bg-red-200 text-red-700 border-red-300"
+            >
+              Reset Expenses Only
+            </AnimatedButton>
+          </div>
         </SlideUp>
 
         {/* Budget Overview Cards */}
@@ -820,32 +941,52 @@ export default function Dashboard() {
             <AnimatedCard className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                 <Calendar className="mr-2 text-blue-600" size={20} />
-                EMI Summary
+                EMI Summary - Current Month
               </h3>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">EMIs This Month:</span>
+                  <span className="text-gray-600">Outstanding EMIs (Due Soon):</span>
                   <span className="font-semibold text-blue-600">₹{budget.totalEMIs.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Total EMI Count:</span>
-                  <span className="font-semibold text-gray-700">{emis.length}</span>
+                  <span className="text-gray-600">EMIs Due This Month:</span>
+                  <span className="font-semibold text-orange-600">
+                    {emis.filter(emi => {
+                      const currentDay = new Date().getDate()
+                      return emi.remainingInstallments > 0 && emi.dueDate >= currentDay
+                    }).length}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Active EMIs:</span>
+                  <span className="text-gray-600">Total Active EMIs:</span>
                   <span className="font-semibold text-green-600">
                     {emis.filter(emi => emi.remainingInstallments > 0).length}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t">
+                  <span className="text-gray-600 text-xs">Next Due Date:</span>
+                  <span className="font-semibold text-gray-700 text-xs">
+                    {(() => {
+                      const currentDay = new Date().getDate()
+                      const nextEMI = emis
+                        .filter(emi => emi.remainingInstallments > 0 && emi.dueDate >= currentDay)
+                        .sort((a, b) => a.dueDate - b.dueDate)[0]
+                      return nextEMI ? `${nextEMI.dueDate}th of month` : 'None'
+                    })()}
                   </span>
                 </div>
               </div>
             </AnimatedCard>
           </div>
 
-          {/* Debugging breakdown */}
+          {/* Enhanced Information breakdown */}
           <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
-            <h3 className="font-semibold mb-2">Calculation Breakdown:</h3>
-            <p>Income: ₹{budget.totalIncome.toLocaleString()} - Cash/Bank Expenses: ₹{budget.totalExpenses.toLocaleString()} - Outstanding EMIs (This Month): ₹{budget.totalEMIs.toLocaleString()} = Balance: ₹{budget.balance.toLocaleString()}</p>
-            <p className="text-xs mt-1">Note: Balance shows your actual cash/bank balance. Credit card purchases don&apos;t reduce this directly - only credit card payments, EMI payments, and cash expenses do.</p>
+            <h3 className="font-semibold mb-2">Financial Calculation:</h3>
+            <p>Income: ₹{budget.totalIncome.toLocaleString()} - Cash/Bank Expenses: ₹{budget.totalExpenses.toLocaleString()} - Outstanding EMIs (Due Soon): ₹{budget.totalEMIs.toLocaleString()} = Available Balance: ₹{budget.balance.toLocaleString()}</p>
+            <p className="text-xs mt-2 leading-relaxed">
+              <strong>Note:</strong> Outstanding EMIs only include EMIs that are due from today onwards in the current month. 
+              Past due EMIs are not included in the calculation. Use the reset buttons above to start fresh for a new month.
+            </p>
           </div>
         </SlideUp>
 

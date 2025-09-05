@@ -735,29 +735,29 @@ export default function Dashboard() {
       {/* Header */}
       <AnimatedCard className="sticky top-0 z-50 bg-white/20 backdrop-blur-xl shadow-2xl border-0 rounded-none border-b border-white/10">
         <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent"></div>
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex justify-between items-center h-16 sm:h-20">
-            <SlideUp className="flex items-center space-x-2 sm:space-x-4">
-              <Logo size="md" className="sm:w-auto w-8" />
-              <div className="min-w-0">
-                <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-[#04132a] via-[#759ab7] to-[#ce6e55] bg-clip-text text-transparent truncate">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="flex justify-between items-center h-20">
+            <SlideUp className="flex items-center space-x-4">
+              <Logo size="lg" />
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-[#04132a] via-[#759ab7] to-[#ce6e55] bg-clip-text text-transparent">
                   ExpenseTracker
                 </h1>
-                <p className="text-xs text-gray-600/80 font-medium tracking-wider uppercase hidden sm:block">
+                <p className="text-xs text-gray-600/80 font-medium tracking-wider uppercase">
                   Financial Management
                 </p>
               </div>
             </SlideUp>
-            <FadeIn delay={0.2} className="flex items-center space-x-2 sm:space-x-4">
-              <div className="text-right hidden sm:block">
+            <FadeIn delay={0.2} className="flex items-center space-x-4">
+              <div className="text-right">
                 <p className="text-sm text-gray-500">Welcome back</p>
-                <p className="font-semibold text-gray-800 truncate max-w-32 lg:max-w-none">{user?.firstName || user?.emailAddresses[0]?.emailAddress}</p>
+                <p className="font-semibold text-gray-800">{user?.firstName || user?.emailAddresses[0]?.emailAddress}</p>
               </div>
-              <div className="flex items-center gap-1 sm:gap-2">
+              <div className="flex items-center gap-2">
                 <UserButton 
                   appearance={{
                     elements: {
-                      avatarBox: 'w-8 h-8 sm:w-10 sm:h-10 ring-2 ring-primary-200 hover:ring-primary-300 transition-all duration-200',
+                      avatarBox: 'w-10 h-10 ring-2 ring-primary-200 hover:ring-primary-300 transition-all duration-200',
                     }
                   }}
                   showName={false}
@@ -769,103 +769,92 @@ export default function Dashboard() {
       </AnimatedCard>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Quick Actions */}
-        <SlideUp delay={0.1} className="mb-8 sm:mb-12">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">Quick Actions</h2>
-          <StaggerContainer className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-4">
-            <StaggerItem className="col-span-1">
+        <SlideUp delay={0.1} className="mb-12">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
+          <StaggerContainer className="flex flex-wrap gap-4">
+            <StaggerItem>
               <AnimatedButton
                 onClick={() => {
                   setEditingExpense(null)
                   setShowExpenseForm(true)
                 }}
                 variant="primary"
-                size="sm"
-                className="w-full sm:w-auto text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-3"
-                icon={<Plus className="w-4 h-4 sm:w-5 sm:h-5" />}
+                size="lg"
+                icon={<Plus className="w-5 h-5" />}
               >
-                <span className="hidden sm:inline">Add Expense</span>
-                <span className="sm:hidden">Expense</span>
+                Add Expense
               </AnimatedButton>
             </StaggerItem>
-            <StaggerItem className="col-span-1">
+            <StaggerItem>
               <AnimatedButton
                 onClick={() => {
                   setEditingIncome(null)
                   setShowIncomeForm(true)
                 }}
                 variant="success"
-                size="sm"
-                className="w-full sm:w-auto text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-3"
-                icon={<TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />}
+                size="lg"
+                icon={<TrendingUp className="w-5 h-5" />}
               >
-                <span className="hidden sm:inline">Add Income</span>
-                <span className="sm:hidden">Income</span>
+                Add Income
               </AnimatedButton>
             </StaggerItem>
-            <StaggerItem className="col-span-1">
+            <StaggerItem>
               <AnimatedButton
                 onClick={() => {
                   setEditingEMI(null)
                   setShowEMIForm(true)
                 }}
                 variant="secondary"
-                size="sm"
-                className="w-full sm:w-auto text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-3"
-                icon={<Calendar className="w-4 h-4 sm:w-5 sm:h-5" />}
+                size="lg"
+                icon={<Calendar className="w-5 h-5" />}
               >
-                <span className="hidden sm:inline">Add EMI</span>
-                <span className="sm:hidden">EMI</span>
+                Add EMI
               </AnimatedButton>
             </StaggerItem>
-            <StaggerItem className="col-span-1">
+            <StaggerItem>
               <AnimatedButton
                 onClick={() => setShowCreditCardManager(true)}
                 variant="secondary"
-                size="sm"
-                className="w-full sm:w-auto text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-3"
-                icon={<CreditCardIcon className="w-4 h-4 sm:w-5 sm:h-5" />}
+                size="lg"
+                icon={<CreditCardIcon className="w-5 h-5" />}
               >
-                <span className="hidden sm:inline">Manage Cards</span>
-                <span className="sm:hidden">Cards</span>
+                Manage Cards
               </AnimatedButton>
             </StaggerItem>
-            <StaggerItem className="col-span-1">
+            <StaggerItem>
               <AnimatedButton
                 onClick={() => setShowExportModal(true)}
                 variant="secondary"
-                size="sm"
-                className="w-full sm:w-auto text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-3"
-                icon={<Download className="w-4 h-4 sm:w-5 sm:h-5" />}
+                size="lg"
+                icon={<Download className="w-5 h-5" />}
               >
-                <span className="hidden sm:inline">Export PDF</span>
-                <span className="sm:hidden">Export</span>
+                Export PDF
               </AnimatedButton>
             </StaggerItem>
-            <StaggerItem className="col-span-1">
+            <StaggerItem>
               <AnimatedButton
                 onClick={handleResetIncomeAndExpenses}
                 variant="danger"
-                size="sm"
-                className="w-full sm:w-auto text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-3 bg-red-500 hover:bg-red-600 text-white"
-                icon={<LogOut className="w-4 h-4 sm:w-5 sm:h-5" />}
+                size="lg"
+                icon={<LogOut className="w-5 h-5" />}
+                className="bg-red-500 hover:bg-red-600 text-white"
               >
-                <span className="hidden sm:inline">Reset All</span>
-                <span className="sm:hidden">Reset</span>
+                Reset All
               </AnimatedButton>
             </StaggerItem>
           </StaggerContainer>
         </SlideUp>
 
         {/* Additional Reset Options */}
-        <SlideUp delay={0.15} className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row justify-end gap-2">
+        <SlideUp delay={0.15} className="mb-8">
+          <div className="flex justify-end gap-2">
             <AnimatedButton
               onClick={handleResetIncome}
               variant="secondary"
               size="sm"
-              className="text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 border-orange-300 px-3 py-2"
+              className="text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 border-orange-300"
             >
               Reset Income Only
             </AnimatedButton>
@@ -873,7 +862,7 @@ export default function Dashboard() {
               onClick={handleResetExpenses}
               variant="secondary"
               size="sm"
-              className="text-xs bg-red-100 hover:bg-red-200 text-red-700 border-red-300 px-3 py-2"
+              className="text-xs bg-red-100 hover:bg-red-200 text-red-700 border-red-300"
             >
               Reset Expenses Only
             </AnimatedButton>
@@ -881,16 +870,16 @@ export default function Dashboard() {
         </SlideUp>
 
         {/* Budget Overview Cards */}
-        <SlideUp delay={0.2} className="mb-8 sm:mb-12">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">Financial Overview</h2>
-          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+        <SlideUp delay={0.2} className="mb-12">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Financial Overview</h2>
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StaggerItem>
-              <AnimatedCard className="p-4 sm:p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer min-h-[120px] sm:min-h-[140px]">
+              <AnimatedCard className="p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer min-h-[140px]">
                 <div className="flex items-center justify-between h-full">
                   <div className="flex-1">
-                    <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1 sm:mb-2">Total Income</p>
+                    <p className="text-sm font-medium text-gray-500 mb-2">Total Income</p>
                     <motion.p 
-                      className="text-xl sm:text-3xl font-bold text-green-600"
+                      className="text-3xl font-bold text-green-600"
                       initial={{ scale: 1 }}
                       whileHover={{ scale: 1.05 }}
                     >
@@ -899,22 +888,22 @@ export default function Dashboard() {
                     <p className="text-xs text-gray-400 mt-1">This month</p>
                   </div>
                   <motion.div 
-                    className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                    className="w-14 h-14 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
                     whileHover={{ rotate: 5 }}
                   >
-                    <ArrowUpCircle className="w-5 h-5 sm:w-7 sm:h-7 text-green-600" />
+                    <ArrowUpCircle className="w-7 h-7 text-green-600" />
                   </motion.div>
                 </div>
               </AnimatedCard>
             </StaggerItem>
             
             <StaggerItem>
-              <AnimatedCard className="p-4 sm:p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer min-h-[120px] sm:min-h-[140px]">
+              <AnimatedCard className="p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer min-h-[140px]">
                 <div className="flex items-center justify-between h-full">
                   <div className="flex-1">
-                    <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1 sm:mb-2">Total Expenses</p>
+                    <p className="text-sm font-medium text-gray-500 mb-2">Total Expenses</p>
                     <motion.p 
-                      className="text-xl sm:text-3xl font-bold text-red-600"
+                      className="text-3xl font-bold text-red-600"
                       initial={{ scale: 1 }}
                       whileHover={{ scale: 1.05 }}
                     >
@@ -923,22 +912,22 @@ export default function Dashboard() {
                     <p className="text-xs text-gray-400 mt-1">Includes paid EMIs</p>
                   </div>
                   <motion.div 
-                    className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                    className="w-14 h-14 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
                     whileHover={{ rotate: -5 }}
                   >
-                    <ArrowDownCircle className="w-5 h-5 sm:w-7 sm:h-7 text-red-600" />
+                    <ArrowDownCircle className="w-7 h-7 text-red-600" />
                   </motion.div>
                 </div>
               </AnimatedCard>
             </StaggerItem>
             
             <StaggerItem>
-              <AnimatedCard className="p-4 sm:p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer min-h-[120px] sm:min-h-[140px]">
+              <AnimatedCard className="p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer min-h-[140px]">
                 <div className="flex items-center justify-between h-full">
                   <div className="flex-1">
-                    <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1 sm:mb-2">Outstanding EMIs</p>
+                    <p className="text-sm font-medium text-gray-500 mb-2">Outstanding EMIs</p>
                     <motion.p 
-                      className="text-xl sm:text-3xl font-bold text-orange-600"
+                      className="text-3xl font-bold text-orange-600"
                       initial={{ scale: 1 }}
                       whileHover={{ scale: 1.05 }}
                     >
@@ -947,22 +936,22 @@ export default function Dashboard() {
                     <p className="text-xs text-gray-400 mt-1">This month</p>
                   </div>
                   <motion.div 
-                    className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                    className="w-14 h-14 bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
                     whileHover={{ rotate: 5 }}
                   >
-                    <Banknote className="w-5 h-5 sm:w-7 sm:h-7 text-orange-600" />
+                    <Banknote className="w-7 h-7 text-orange-600" />
                   </motion.div>
                 </div>
               </AnimatedCard>
             </StaggerItem>
             
             <StaggerItem>
-              <AnimatedCard className="p-4 sm:p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer min-h-[120px] sm:min-h-[140px]">
+              <AnimatedCard className="p-6 hover:shadow-2xl transition-all duration-300 group cursor-pointer min-h-[140px]">
                 <div className="flex items-center justify-between h-full">
                   <div className="flex-1">
-                    <p className="text-xs sm:text-sm font-medium text-gray-500 mb-1 sm:mb-2">Balance</p>
+                    <p className="text-sm font-medium text-gray-500 mb-2">Balance</p>
                     <motion.p 
-                      className={`text-xl sm:text-3xl font-bold ${budget.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                      className={`text-3xl font-bold ${budget.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}
                       initial={{ scale: 1 }}
                       whileHover={{ scale: 1.05 }}
                     >
@@ -973,14 +962,14 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <motion.div 
-                    className={`w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br ${
+                    className={`w-14 h-14 bg-gradient-to-br ${
                       budget.balance >= 0 
                         ? 'from-blue-100 to-blue-200' 
                         : 'from-red-100 to-red-200'
                     } rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
                     whileHover={{ rotate: budget.balance >= 0 ? 5 : -5 }}
                   >
-                    <PiggyBank className={`w-5 h-5 sm:w-7 sm:h-7 ${
+                    <PiggyBank className={`w-7 h-7 ${
                       budget.balance >= 0 ? 'text-blue-600' : 'text-red-600'
                     }`} />
                   </motion.div>
@@ -990,21 +979,21 @@ export default function Dashboard() {
           </StaggerContainer>
           
           {/* Summary Section */}
-          <div className="mt-4 sm:mt-6 grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Payment Method Breakdown */}
-            <AnimatedCard className="p-4 sm:p-6 bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
-                <CreditCardIcon className="mr-2 text-purple-600" size={16} />
+            <AnimatedCard className="p-6 bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <CreditCardIcon className="mr-2 text-purple-600" size={20} />
                 Payment Method Breakdown
               </h3>
-              <div className="space-y-2 sm:space-y-3">
+              <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs sm:text-sm text-gray-600">Cash/Bank Expenses:</span>
-                  <span className="font-semibold text-red-600 text-xs sm:text-sm">₹{budget.totalExpenses.toLocaleString()}</span>
+                  <span className="text-gray-600">Cash/Bank Expenses:</span>
+                  <span className="font-semibold text-red-600">₹{budget.totalExpenses.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs sm:text-sm text-gray-600">Credit Card Expenses:</span>
-                  <span className="font-semibold text-orange-600 text-xs sm:text-sm">
+                  <span className="text-gray-600">Credit Card Expenses:</span>
+                  <span className="font-semibold text-orange-600">
                     ₹{expenses
                       .filter(expense => expense.creditCardId !== null)
                       .reduce((sum, expense) => sum + expense.amount, 0)
@@ -1013,8 +1002,8 @@ export default function Dashboard() {
                 </div>
                 <div className="border-t pt-2">
                   <div className="flex justify-between items-center">
-                    <span className="font-semibold text-gray-800 text-xs sm:text-sm">Total Expenses:</span>
-                    <span className="font-bold text-gray-900 text-xs sm:text-sm">
+                    <span className="font-semibold text-gray-800">Total Expenses:</span>
+                    <span className="font-bold text-gray-900">
                       ₹{(budget.totalExpenses + expenses
                         .filter(expense => expense.creditCardId !== null)
                         .reduce((sum, expense) => sum + expense.amount, 0))
@@ -1123,11 +1112,11 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8"
+              className="grid grid-cols-1 lg:grid-cols-2 gap-8"
             >
-              <AnimatedCard className="p-4 sm:p-6">
-                <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center">
-                  <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-red-500" />
+              <AnimatedCard className="p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                  <TrendingDown className="w-5 h-5 mr-2 text-red-500" />
                   Recent Expenses
                 </h3>
                 <ExpenseList 
@@ -1138,9 +1127,9 @@ export default function Dashboard() {
                   keyPrefix="overview"
                 />
               </AnimatedCard>
-              <AnimatedCard className="p-4 sm:p-6">
-                <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center">
-                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-orange-500" />
+              <AnimatedCard className="p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                  <Calendar className="w-5 h-5 mr-2 text-orange-500" />
                   Upcoming EMIs
                 </h3>
                 <EMIList 

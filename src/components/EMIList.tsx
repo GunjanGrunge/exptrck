@@ -10,6 +10,7 @@ interface EMIListProps {
   onEdit: (emi: EMI) => void
   onDelete: (id: string) => void
   onUpdate: (emi: EMI) => void
+  onChangeDueDate?: (emi: EMI) => void
   showActions?: boolean
   keyPrefix?: string
 }
@@ -19,6 +20,7 @@ export default function EMIList({
   onEdit, 
   onDelete, 
   onUpdate,
+  onChangeDueDate,
   showActions = true,
   keyPrefix = ''
 }: EMIListProps) {
@@ -148,6 +150,15 @@ export default function EMIList({
                           title="Mark as Paid"
                         >
                           <Check className="w-4 h-4" />
+                        </button>
+                      )}
+                      {onChangeDueDate && (
+                        <button
+                          onClick={() => onChangeDueDate(emi)}
+                          className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                          title="Change Due Date"
+                        >
+                          <Calendar className="w-4 h-4" />
                         </button>
                       )}
                       <button

@@ -16,6 +16,7 @@ import ExpenseList from './ExpenseList'
 import EMIList from './EMIList'
 import EMIForm from './EMIForm'
 import EMIDateChangeModal from './EMIDateChangeModal'
+import EMISummaryModal from './EMISummaryModal'
 import IncomeForm from './IncomeForm'
 import IncomeList from './IncomeList'
 import CreditCardManager from './CreditCardManager'
@@ -33,6 +34,7 @@ export default function Dashboard() {
   const [showIncomeForm, setShowIncomeForm] = useState(false)
   const [showCreditCardManager, setShowCreditCardManager] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
+  const [showEMISummaryModal, setShowEMISummaryModal] = useState(false)
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [editingEMI, setEditingEMI] = useState<EMI | null>(null)
   const [editingIncome, setEditingIncome] = useState<Income | null>(null)
@@ -65,7 +67,8 @@ export default function Dashboard() {
         console.log('Expenses loaded:', expensesData.length)
         setExpenses(expensesData)
       } else {
-        console.error('Failed to fetch expenses:', expensesRes.status)
+        const errorText = await expensesRes.text()
+        console.error('Failed to fetch expenses:', expensesRes.status, errorText)
       }
 
       if (emisRes.ok) {
@@ -78,7 +81,8 @@ export default function Dashboard() {
         
         setEMIs(updatedEMIs)
       } else {
-        console.error('Failed to fetch EMIs:', emisRes.status)
+        const errorText = await emisRes.text()
+        console.error('Failed to fetch EMIs:', emisRes.status, errorText)
       }
 
       if (incomeRes.ok) {
@@ -86,7 +90,8 @@ export default function Dashboard() {
         console.log('Income loaded:', incomeData.length)
         setIncomes(incomeData)
       } else {
-        console.error('Failed to fetch income:', incomeRes.status)
+        const errorText = await incomeRes.text()
+        console.error('Failed to fetch income:', incomeRes.status, errorText)
       }
 
       if (creditCardsRes.ok) {
@@ -741,10 +746,10 @@ export default function Dashboard() {
               <Logo size="lg" />
               <div>
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-[#04132a] via-[#759ab7] to-[#ce6e55] bg-clip-text text-transparent">
-                  ExpenseTracker
+                  Vyay
                 </h1>
                 <p className="text-xs text-gray-600/80 font-medium tracking-wider uppercase">
-                  Financial Management
+                  Balance Your Aay & Vyay
                 </p>
               </div>
             </SlideUp>
@@ -1177,10 +1182,20 @@ export default function Dashboard() {
               transition={{ duration: 0.3 }}
             >
               <AnimatedCard className="p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                  <Calendar className="w-5 h-5 mr-2 text-orange-500" />
-                  EMI Management
-                </h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-800 flex items-center">
+                    <Calendar className="w-5 h-5 mr-2 text-orange-500" />
+                    EMI Management
+                  </h3>
+                  <AnimatedButton
+                    onClick={() => setShowEMISummaryModal(true)}
+                    variant="secondary"
+                    size="sm"
+                    className="bg-accent-100 hover:bg-accent-200 text-accent-700 border-accent-300"
+                  >
+                    Summarize EMIs
+                  </AnimatedButton>
+                </div>
                 <EMIList 
                   emis={emis} 
                   onEdit={handleUpdateEMI} 
@@ -1294,6 +1309,13 @@ export default function Dashboard() {
           )}
         />
       )}
+
+      {/* EMI Summary Modal */}
+      <EMISummaryModal
+        emis={emis}
+        isOpen={showEMISummaryModal}
+        onClose={() => setShowEMISummaryModal(false)}
+      />
       
       {/* Footer */}
       <footer className="mt-16 py-8 border-t border-gray-200/50 bg-white/30 backdrop-blur-sm">

@@ -20,7 +20,7 @@ export default function Home() {
         <div className="max-w-md w-full mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-dark-950 mb-2">
-              Expense Tracker
+              Vyay
             </h1>
             <p className="text-gray-600">
               Manage your expenses, EMIs, and budget effectively

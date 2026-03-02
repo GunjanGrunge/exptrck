@@ -9,7 +9,7 @@ export default function Page() {
             Get Started
           </h1>
           <p className="text-gray-600">
-            Create your Expense Tracker account
+            Create your Vyay account
           </p>
         </div>
         <div className="bg-white rounded-lg shadow-lg p-6">

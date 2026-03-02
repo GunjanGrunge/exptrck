@@ -1,4 +1,4 @@
-# 💰 Expense Tracker
+# 💰 Vyay
 
 A comprehensive monthly expense tracking application built with Next.js, Tailwind CSS, and Clerk authentication.
 

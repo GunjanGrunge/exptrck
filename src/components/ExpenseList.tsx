@@ -2,7 +2,7 @@
 
 import { Edit, Trash2, Calendar, Check } from 'lucide-react'
 import { Expense } from '@/types'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCategory } from '@/lib/utils'
 
 interface ExpenseListProps {
   expenses: Expense[]
@@ -103,7 +103,7 @@ export default function ExpenseList({
                     ? 'bg-primary-100 text-primary-800'
                     : 'bg-gray-100 text-gray-800'
                 }`}>
-                  {expense.category.toUpperCase()}
+                  {formatCategory(expense.category)}
                 </span>
               </td>
               {showActions && (

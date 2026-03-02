@@ -6,8 +6,8 @@ import { ToastProvider } from '@/components/providers/ToastProvider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Expense Tracker',
-  description: 'Track your monthly expenses, EMIs, and budget effectively',
+  title: 'Vyay',
+  description: 'Balance Your Aay & Vyay - Track your monthly expenses, EMIs, and budget effectively',
 }
 
 export default function RootLayout({
@@ -17,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_demo_key'}
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
     >
       <html lang="en">
         <body className={`${inter.className} min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50`}>

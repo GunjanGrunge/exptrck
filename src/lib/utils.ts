@@ -21,6 +21,16 @@ export function formatDate(date: Date): string {
   }).format(date);
 }
 
+export function formatCategory(category: string): string {
+  const categoryMap: Record<string, string> = {
+    'expense': 'Expense',
+    'emi': 'EMI',
+    'transfer': 'Transfer',
+    'credit_card_payment': 'Credit Card Payment'
+  };
+  return categoryMap[category] || category.charAt(0).toUpperCase() + category.slice(1);
+}
+
 export function generateId(): string {
   return Math.random().toString(36).substr(2, 9);
 }

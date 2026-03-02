@@ -58,7 +58,7 @@ export class PDFExportService {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(28);
     doc.setFont('helvetica', 'bold');
-    doc.text('EXPENSE TRACKER', margin, 25);
+    doc.text('VYAY', margin, 25);
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'normal');

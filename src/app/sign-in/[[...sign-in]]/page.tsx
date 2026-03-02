@@ -9,7 +9,7 @@ export default function Page() {
             Welcome Back
           </h1>
           <p className="text-gray-600">
-            Sign in to your Expense Tracker account
+            Sign in to your Vyay account
           </p>
         </div>
         <div className="bg-white rounded-lg shadow-lg p-6">
